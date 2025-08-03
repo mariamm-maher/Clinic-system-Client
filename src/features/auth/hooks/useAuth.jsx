@@ -55,6 +55,32 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const register = async (userData) => {
+    setIsLoading(true);
+    try {
+      const response = await authService.register(userData);
+
+      // Store auth data
+      localStorage.setItem("authToken", response.token);
+      localStorage.setItem("userData", JSON.stringify(response.user));
+
+      setUser(response.user);
+      setIsAuthenticated(true);
+
+      toast.success(`Welcome to our clinic, ${response.user.name}!`);
+
+      // Redirect to patient dashboard
+      window.location.href = "/patient/dashboard";
+
+      return response;
+    } catch (error) {
+      toast.error(error.message || "Registration failed. Please try again.");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await authService.logout();
@@ -95,6 +121,7 @@ export function AuthProvider({ children }) {
     isLoading,
     isAuthenticated,
     login,
+    register,
     logout,
   };
 
@@ -129,6 +156,29 @@ export function useLoginForm() {
 
   return {
     login: handleLogin,
+    isLoading,
+    error,
+    clearError: () => setError(""),
+  };
+}
+
+// Hook for registration form specifically
+export function useRegisterForm() {
+  const [error, setError] = useState("");
+  const { register, isLoading } = useAuth();
+
+  const handleRegister = async (formData) => {
+    setError("");
+
+    try {
+      await register(formData);
+    } catch (err) {
+      setError(err.message || "Registration failed. Please try again.");
+    }
+  };
+
+  return {
+    register: handleRegister,
     isLoading,
     error,
     clearError: () => setError(""),

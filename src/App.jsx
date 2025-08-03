@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { useLanguageInitialization } from "./hooks/useLanguageInitialization";
 import Home from "./features/home/index.jsx";
-import { LoginPage, AuthProvider, ProtectedRoute } from "./features/auth";
+import { AuthProvider, ProtectedRoute } from "./features/auth";
 import DashboardLayout from "./features/doctor-dashboard/components/DashboardLayout.jsx";
 import StaffDashboard from "./features/staff-dashboard/index.jsx";
 import { Toaster } from "@/components/ui/sonner";
@@ -24,6 +24,9 @@ import StatisticsSection from "./features/doctor-dashboard/components/sections/S
 import SettingsSection from "./features/doctor-dashboard/components/sections/SettingsSection";
 import LayoutDemoSection from "./features/doctor-dashboard/components/sections/LayoutDemoSection";
 import RefactoringCompletedSection from "./features/doctor-dashboard/components/sections/RefactoringCompletedSection";
+import Login from "./features/auth/components/Login";
+import Register from "./features/auth/components/Register";
+import ResetPassword from "./features/auth/components/ResetPassword";
 
 function App() {
   // Initialize language and RTL support
@@ -35,7 +38,10 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<LoginPage />} />
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Dashboard Routes with Nested Routes */}
           <Route

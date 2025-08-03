@@ -66,11 +66,74 @@ export const authService = {
 
     // Return user data without password
     const { password: _, ...userWithoutPassword } = user;
-
     return {
       token,
       user: userWithoutPassword,
       expiresIn: rememberMe ? "30 days" : "1 day",
+    };
+  },
+
+  // Register user
+  async register(userData) {
+    await delay(1200); // Simulate network delay
+
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dateOfBirth,
+      gender,
+      address,
+      password,
+    } = userData;
+
+    // Check if user already exists
+    const existingUser = DEMO_USERS.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase()
+    );
+
+    if (existingUser) {
+      throw new Error("User with this email already exists");
+    }
+
+    // Create new user
+    const newUser = {
+      id: DEMO_USERS.length + 1,
+      email: email.toLowerCase(),
+      password, // In real app, this should be hashed
+      name: `${firstName} ${lastName}`,
+      firstName,
+      lastName,
+      phone,
+      dateOfBirth,
+      gender,
+      address,
+      role: "patient", // Default role for registration
+      createdAt: new Date().toISOString(),
+      avatar: null,
+    };
+
+    // Add to demo database
+    DEMO_USERS.push(newUser);
+
+    // Generate mock JWT token
+    const token = btoa(
+      JSON.stringify({
+        userId: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+        exp: Date.now() + 24 * 60 * 60 * 1000, // 1 day
+      })
+    );
+
+    // Return user data without password
+    const { password: _, ...userWithoutPassword } = newUser;
+
+    return {
+      token,
+      user: userWithoutPassword,
+      expiresIn: "1 day",
     };
   },
 

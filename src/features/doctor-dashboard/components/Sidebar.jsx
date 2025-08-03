@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
@@ -88,41 +88,65 @@ export default function Sidebar({
   };
   return (
     <TooltipProvider>
-      {" "}
-      <motion.aside
-        className={cn(
-          "bg-white/95 backdrop-blur-xl border-r border-gray-200/50 flex flex-col shadow-lg",
-          "fixed inset-y-0 left-0 z-50 lg:sticky lg:top-0 lg:h-screen",
-          isCollapsed ? "w-20" : "w-72",
-          isMobileMenuOpen
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
-        )}
-        animate={{
-          width: isCollapsed ? 80 : 288,
-        }}
-        transition={{
-          duration: 0.3,
-          ease: "easeInOut",
-        }}
-      >
-        {/* Clean background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-white" />
+      <AnimatePresence mode="wait">
+        {/* Mobile backdrop overlay */}
 
-        <div className="relative z-10 flex flex-col h-full">
-          <SidebarHeader
-            isCollapsed={isCollapsed}
-            setIsCollapsed={setIsCollapsed}
-          />
+        <motion.aside
+          key={isCollapsed ? "collapsed" : "expanded"}
+          className={cn(
+            "relative flex flex-col shadow-2xl overflow-hidden",
+            "fixed inset-y-0 left-0 z-50 lg:sticky lg:top-0 lg:h-screen",
+            "transition-all duration-300 ease-in-out",
+            isCollapsed ? "w-20" : "w-72",
+            isMobileMenuOpen
+              ? "translate-x-0 "
+              : "-translate-x-full lg:translate-x-0"
+          )}
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: 1,
+            width: isCollapsed ? 80 : 384,
+          }}
+          exit={{ opacity: 0 }}
+          transition={{
+            duration: 0.3,
+            ease: "easeOut",
+          }}
+          style={{
+            minWidth: isCollapsed ? "100px" : "300px",
+            maxWidth: isCollapsed ? "100px" : "300px",
+          }}
+        >
+          {/* Enhanced background with multiple layers */}
 
-          <NavigationMenu
-            navigationItems={navigationItems}
-            activeSection={activeSection}
-            isCollapsed={isCollapsed}
-            handleNavigation={handleNavigation}
-          />
-        </div>
-      </motion.aside>
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 via-purple-50/10 to-indigo-50/20" />{" "}
+            <div className="absolute inset-0 backdrop-blur-sm bg-white/70 border-r border-blue-100/50" />{" "}
+            <div
+              className="absolute inset-0 opacity-5"
+              style={{
+                backgroundImage: `radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.3) 1px, transparent 0)`,
+                backgroundSize: "24px 24px",
+              }}
+            />
+          </div>
+
+          {/* Content with higher z-index */}
+          <div className="relative z-10 flex flex-col h-full">
+            <SidebarHeader
+              isCollapsed={isCollapsed}
+              setIsCollapsed={setIsCollapsed}
+            />
+
+            <NavigationMenu
+              navigationItems={navigationItems}
+              activeSection={activeSection}
+              isCollapsed={isCollapsed}
+              handleNavigation={handleNavigation}
+            />
+          </div>
+        </motion.aside>
+      </AnimatePresence>
     </TooltipProvider>
   );
 }
