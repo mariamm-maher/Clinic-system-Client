@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import NavigationItem from "./NavigationItem";
 
 export default function NavigationMenu({
@@ -8,7 +7,7 @@ export default function NavigationMenu({
   handleNavigation,
 }) {
   return (
-    <nav className="flex-1 p-4 space-y-3 overflow-y-auto overflow-x-hidden">
+    <nav className="flex-1 min-h-0 p-4 space-y-3 overflow-y-auto overflow-x-hidden">
       <div className="space-y-2 w-full">
         {navigationItems.map((item, index) => {
           const isActive = activeSection === item.id;

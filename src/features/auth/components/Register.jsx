@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useRegisterForm } from "../hooks/useAuth.jsx";
+import { toast } from "sonner";
+import { useAuthStore } from "@/stores";
 import LeftSide from "./LeftSide";
 import {
   Building2,
@@ -21,7 +22,23 @@ import {
   UserPlus,
 } from "lucide-react";
 
+// Google OAuth configuration - moved outside component to prevent re-renders
+const GOOGLE_CLIENT_ID =
+  "1046697718146-en8fc55dv382vsgtclvv3pgrco16oj3f.apps.googleusercontent.com";
+const GOOGLE_REDIRECT_URI = "http://localhost:4000/api/auth/google/callback";
+const GOOGLE_SCOPE = "openid email profile";
+
+// Construct Google OAuth URL
+const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(
+  GOOGLE_REDIRECT_URI
+)}&response_type=code&scope=${encodeURIComponent(
+  GOOGLE_SCOPE
+)}&access_type=offline&prompt=consent`;
+
 export default function Register() {
+  const navigate = useNavigate();
+  const signUp = useAuthStore((state) => state.signUp);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -31,15 +48,65 @@ export default function Register() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const { register, isLoading, error } = useRegisterForm();
-
+  const [isLoading, setIsLoading] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate password match
     if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords don't match");
       return;
     }
-    await register(formData);
+
+    // Validate terms agreement
+    if (!formData.agreeToTerms) {
+      toast.error("You must agree to the terms and conditions");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await signUp({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: "patient", // Default role for registration
+      });
+
+      if (result?.success) {
+        toast.success("Registration successful! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000); // Redirect after 2 seconds
+      }
+    } catch (error) {
+      if (error.details && Array.isArray(error.details)) {
+        const errorList = error.details.map(
+          (detail) => detail.message || detail
+        );
+        const formattedErrors = errorList.map((err) => `• ${err}`).join("\n");
+        toast.error(
+          <div>
+            <div className="whitespace-pre-line text-sm">{formattedErrors}</div>
+          </div>,
+          {
+            duration: 6000, // Longer duration for multiple errors
+            style: {
+              minWidth: "350px",
+              maxWidth: "500px",
+            },
+          }
+        );
+      } else if (error?.message) {
+        // Display general error message from server
+        toast.error(error?.message);
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -48,8 +115,9 @@ export default function Register() {
 
   const handleGoogleRegister = () => {
     console.log("Google registration initiated");
-    window.location.href = "/auth/google/register";
+    window.location.href = GOOGLE_AUTH_URL;
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
       <LeftSide />
@@ -78,14 +146,6 @@ export default function Register() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {error && (
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-800">
-                    {error}
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {/* Google Register Button */}
               <Button
                 type="button"
@@ -134,6 +194,7 @@ export default function Register() {
                     Full Name
                   </Label>
                   <div className="relative">
+                    {" "}
                     <Input
                       id="name"
                       type="text"
@@ -143,7 +204,7 @@ export default function Register() {
                         handleInputChange("name", e.target.value)
                       }
                       required
-                      className="h-11 pl-10 border-2 focus:border-indigo-500"
+                      className="h-11 pl-10 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200"
                     />
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
@@ -158,6 +219,7 @@ export default function Register() {
                     Email Address
                   </Label>
                   <div className="relative">
+                    {" "}
                     <Input
                       id="email"
                       type="email"
@@ -167,7 +229,7 @@ export default function Register() {
                         handleInputChange("email", e.target.value)
                       }
                       required
-                      className="h-11 pl-10 border-2 focus:border-indigo-500"
+                      className="h-11 pl-10 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200"
                     />
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
@@ -182,6 +244,7 @@ export default function Register() {
                     Password
                   </Label>
                   <div className="relative">
+                    {" "}
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
@@ -191,7 +254,7 @@ export default function Register() {
                         handleInputChange("password", e.target.value)
                       }
                       required
-                      className="h-11 pl-10 pr-10 border-2 focus:border-indigo-500"
+                      className="h-11 pl-10 pr-10 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200"
                     />
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <button
@@ -217,6 +280,7 @@ export default function Register() {
                     Confirm Password
                   </Label>
                   <div className="relative">
+                    {" "}
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
@@ -226,7 +290,7 @@ export default function Register() {
                         handleInputChange("confirmPassword", e.target.value)
                       }
                       required
-                      className="h-11 pl-10 pr-10 border-2 focus:border-indigo-500"
+                      className="h-11 pl-10 pr-10 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200"
                     />
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <button
@@ -328,15 +392,6 @@ export default function Register() {
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
                   >
                     Sign in
-                  </Link>
-                </div>
-                <div className="text-center">
-                  <Link
-                    to="/"
-                    className="inline-flex items-center text-sm text-gray-600 hover:text-blue-600 font-medium"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to website
                   </Link>
                 </div>
               </div>

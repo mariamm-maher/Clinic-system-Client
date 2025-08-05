@@ -1,9 +1,23 @@
-import { Stethoscope, Heart, Clock } from "lucide-react";
+import { Stethoscope, Heart, Clock, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { clinicConfig } from "@/lib/config";
 
 export default function LeftSide() {
   return (
     <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden">
+      {/* Back to website link at the top */}
+      <div className="absolute top-6 left-6 z-20">
+        <div className="text-center">
+          <Link
+            to="/"
+            className="inline-flex items-center text-sm text-white/80 hover:text-white font-medium transition-colors duration-300 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/20"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to website
+          </Link>
+        </div>
+      </div>
+      
       {/* Animated Medical Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         {/* Floating medical cross patterns with subtle animation */}

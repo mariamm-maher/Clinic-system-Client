@@ -15,7 +15,7 @@ import {
 export default function SidebarHeader({ isCollapsed, setIsCollapsed }) {
   return (
     <motion.div
-      className="p-6 border-b border-gray-200/50 flex-shrink-0 relative overflow-hidden"
+      className="p-4 border-b border-gray-200/50 flex-shrink-0 relative overflow-hidden"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

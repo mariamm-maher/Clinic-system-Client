@@ -37,6 +37,7 @@ export default function NavigationItem({
       },
     },
   };
+
   return (
     <motion.div variants={itemVariants} className="w-full overflow-hidden">
       <Tooltip>
@@ -48,7 +49,7 @@ export default function NavigationItem({
               "w-full justify-start relative group transition-all duration-300",
               "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50",
               "hover:border-blue-200/50 border border-transparent",
-              "rounded-2xl p-4 h-auto min-h-[3.5rem]",
+              "rounded-2xl p-3 h-auto min-h-[3rem]",
               "overflow-hidden",
               isActive && [
                 "bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600",
@@ -59,11 +60,11 @@ export default function NavigationItem({
               isCollapsed && "justify-center px-2"
             )}
           >
-            {" "}
             {/* Background glow effect for active item */}
             {isActive && (
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-indigo-400/20 rounded-2xl blur-lg opacity-50" />
-            )}{" "}
+            )}
+
             {/* Icon container */}
             <div
               className={cn(
@@ -87,7 +88,8 @@ export default function NavigationItem({
               {isActive && (
                 <div className="absolute inset-0 bg-white/10 rounded-xl opacity-30" />
               )}
-            </div>{" "}
+            </div>
+
             {/* Text content */}
             {!isCollapsed && (
               <div className="flex-1 flex items-center justify-between ml-3 overflow-hidden">
@@ -103,14 +105,35 @@ export default function NavigationItem({
                     {item.label}
                   </span>
 
-                  {/* Subtitle for active item */}
-                  {isActive && (
-                    <span className="text-xs text-white/80 font-medium truncate">
-                      Active Section
+                  {/* Subtitle - always show if available */}
+                  {item.subtitle && (
+                    <span
+                      className={cn(
+                        "text-xs font-medium truncate transition-colors duration-300",
+                        isActive
+                          ? "text-white/80"
+                          : "text-gray-500 group-hover:text-gray-600"
+                      )}
+                    >
+                      {item.subtitle}
                     </span>
                   )}
-                </div>{" "}
+                </div>
+
                 <div className="flex items-center space-x-2 flex-shrink-0">
+                  {/* Badge if available */}
+                  {item.badge && (
+                    <Badge
+                      variant={isActive ? "secondary" : "outline"}
+                      className={cn(
+                        "text-xs",
+                        isActive && "bg-white/20 text-white border-white/30"
+                      )}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+
                   {/* Arrow indicator */}
                   <div
                     className={cn(
@@ -132,6 +155,7 @@ export default function NavigationItem({
                 </div>
               </div>
             )}
+
             {/* Hover effect overlay */}
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-purple-400/0 to-indigo-400/0 rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"
@@ -139,6 +163,19 @@ export default function NavigationItem({
             />
           </Button>
         </TooltipTrigger>
+        <TooltipContent side="right">
+          <div className="text-center">
+            <p className="font-medium">{item.label}</p>
+            {item.subtitle && (
+              <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
+            )}
+            {item.badge && (
+              <Badge variant="outline" className="text-xs mt-1">
+                {item.badge}
+              </Badge>
+            )}
+          </div>
+        </TooltipContent>
       </Tooltip>
     </motion.div>
   );

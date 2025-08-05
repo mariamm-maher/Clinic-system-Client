@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import LanguageToggle from "@/components/common/LanguageToggle";
+import { LogoutButton } from "@/features/auth";
 import {
   Building2,
   Bell,
@@ -89,8 +90,13 @@ export default function Header() {
               <Bell className="w-5 h-5 text-gray-600" />
               <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 bg-red-500 text-white text-xs flex items-center justify-center">
                 3
-              </Badge>
+              </Badge>{" "}
             </Button>
+
+            <Separator orientation="vertical" className="h-8" />
+
+            {/* Logout Button */}
+            <LogoutButton variant="ghost" size="sm" />
 
             {/* Profile */}
             <div className="flex items-center space-x-3">

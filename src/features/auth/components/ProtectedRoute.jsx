@@ -1,71 +1,69 @@
-import { useAuth } from "../hooks/useAuth.jsx";
-import { hasAnyRole } from "../services/authService";
+import { useEffect, useMemo, memo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores";
+import Unauthorized from "./Unauthorized";
 
-export default function ProtectedRoute({
-  children,
-  requiredRoles = [],
-  fallback = null,
-  redirectTo = "/login",
-}) {
-  const { isAuthenticated, user, isLoading } = useAuth();
+const ProtectedRoute = memo(
+  ({
+    roles = null,
+    children,
+    fallbackPath = "/login",
+    showErrorPage = true,
+    requireAuthentication = true,
+  }) => {
+    const navigate = useNavigate();
 
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+    // Use separate selectors to avoid infinite loop issues
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const role = useAuthStore((state) => state.role);
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    window.location.href = redirectTo;
+    // Memoize role access check to prevent recalculation on every render
+    const hasAccess = useMemo(() => {
+      if (!roles) return true;
+      if (!isAuthenticated) return false;
+
+      if (typeof roles === "string") {
+        return role === roles;
+      } else if (Array.isArray(roles)) {
+        return roles.includes(role);
+      }
+      return false;
+    }, [roles, role, isAuthenticated]);
+
+    // Handle authentication redirect only when needed
+    useEffect(() => {
+      if (requireAuthentication && !isAuthenticated) {
+        navigate(fallbackPath);
+      }
+    }, [requireAuthentication, isAuthenticated, navigate, fallbackPath]);
+
+    // Early returns for better performance
+    if (requireAuthentication && !isAuthenticated) {
+      return null;
+    }
+
+    if (!roles) {
+      return children;
+    }
+
+    if (hasAccess) {
+      return children;
+    }
+
+    if (showErrorPage) {
+      const requiredRole = typeof roles === "string" ? roles : null;
+      const requiredRoles = Array.isArray(roles) ? roles : null;
+      return (
+        <Unauthorized
+          requiredRole={requiredRole}
+          requiredRoles={requiredRoles}
+        />
+      );
+    }
     return null;
   }
+);
 
-  // Check role requirements
-  if (requiredRoles.length > 0 && !hasAnyRole(user, requiredRoles)) {
-    return (
-      fallback || (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center max-w-md mx-auto p-6">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-8 h-8 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Access Denied
-            </h2>
-            <p className="text-gray-600 mb-4">
-              You don't have permission to access this page.
-            </p>
-            <button
-              onClick={() => window.history.back()}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Go Back
-            </button>
-          </div>
-        </div>
-      )
-    );
-  }
+ProtectedRoute.displayName = "ProtectedRoute";
 
-  // Render protected content
-  return children;
-}
+export default ProtectedRoute;

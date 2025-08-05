@@ -25,14 +25,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { clinicConfig } from "@/lib/config";
-import { toast } from "sonner";
+import { useCreateAppointment } from "@/features/home/hooks/useAppointment";
 
 export default function AppointmentForm() {
   const { t } = useTranslation();
@@ -47,38 +41,42 @@ export default function AppointmentForm() {
     appointmentType: "",
     termsAccepted: false,
   });
-  const [selectedDate, setSelectedDate] = useState();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingProgress, setBookingProgress] = useState(0);
+  const [selectedDay, setSelectedDay] = useState("");
+
+  // React Query mutation hook for creating appointments
+  const createAppointmentMutation = useCreateAppointment();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setBookingProgress(0);
+
+    // Prepare appointment data for API
+    const appointmentData = {
+      patientName: formData.name,
+      patientPhone: formData.phone,
+      day: selectedDay,
+      time: formData.appointmentTime,
+      notes: formData.reason || "",
+    };
 
     try {
-      // Simulate API call with progress updates
-      setBookingProgress(20);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      setBookingProgress(50);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      setBookingProgress(80);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      setBookingProgress(100);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      toast.success(
-        "Appointment booked successfully! We'll contact you shortly."
-      );
-      console.log("Appointment booking:", formData);
+      // Use React Query mutation
+      await createAppointmentMutation.mutateAsync(appointmentData);
+      // Reset form on success
+      setFormData({
+        name: "",
+        dateOfBirth: "",
+        phone: "",
+        email: "",
+        appointmentDate: "",
+        appointmentTime: "",
+        reason: "",
+        appointmentType: "",
+        termsAccepted: false,
+      });
+      setSelectedDay("");
     } catch (error) {
-      console.error("Appointment booking failed:", error);
-      toast.error("Failed to book appointment. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-      setBookingProgress(0);
+      // Error handling is done by React Query and the global error handler
+      console.error("Form submission error:", error);
     }
   };
 
@@ -87,18 +85,18 @@ export default function AppointmentForm() {
   };
 
   const timeSlots = [
-    "9:00 AM",
-    "9:30 AM",
-    "10:00 AM",
-    "10:30 AM",
-    "11:00 AM",
-    "11:30 AM",
-    "2:00 PM",
-    "2:30 PM",
-    "3:00 PM",
-    "3:30 PM",
-    "4:00 PM",
-    "4:30 PM",
+    "9:00",
+    "9:30",
+    "10:00",
+    "10:30",
+    "11:00",
+    "11:30",
+    "2:00",
+    "2:30",
+    "3:00",
+    "3:30",
+    "4:00",
+    "4:30",
   ];
 
   return (
@@ -184,58 +182,46 @@ export default function AppointmentForm() {
                 </div>
                 {/* Appointment Date & Time */}{" "}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {" "}
                   <div className="space-y-2">
-                    <Label htmlFor="appointmentDate">
+                    <Label htmlFor="appointmentDay">
                       {t("appointment.preferredDate")} *
                     </Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal"
-                          aria-haspopup="dialog"
-                          aria-expanded="false"
-                          aria-controls="date-picker-popover"
-                        >
-                          {formData.appointmentDate ||
-                            t("appointment.preferredDate")}
-                          <svg
-                            className="ml-auto h-4 w-4 opacity-50"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        id="date-picker-popover"
-                        className="w-auto p-0"
-                        align="start"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => {
-                            setSelectedDate(date);
-                            handleInputChange(
-                              "appointmentDate",
-                              date?.toISOString().split("T")[0] || ""
-                            );
-                          }}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <Select
+                      value={selectedDay}
+                      onValueChange={(value) => {
+                        setSelectedDay(value);
+                        handleInputChange("appointmentDate", value);
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t("appointment.selectDay")} />
+                      </SelectTrigger>{" "}
+                      <SelectContent>
+                        <SelectItem value="Sunday">
+                          {t("appointment.days.sunday")}
+                        </SelectItem>
+                        <SelectItem value="Monday">
+                          {t("appointment.days.monday")}
+                        </SelectItem>
+                        <SelectItem value="Tuesday">
+                          {t("appointment.days.tuesday")}
+                        </SelectItem>
+                        <SelectItem value="Wednesday">
+                          {t("appointment.days.wednesday")}
+                        </SelectItem>
+                        <SelectItem value="Thursday">
+                          {t("appointment.days.thursday")}
+                        </SelectItem>
+                        <SelectItem value="Friday">
+                          {t("appointment.days.friday")}
+                        </SelectItem>
+                        <SelectItem value="Saturday">
+                          {t("appointment.days.saturday")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="appointmentTime">
                       {t("appointment.preferredTime")} *
@@ -298,23 +284,17 @@ export default function AppointmentForm() {
                       privacy policy
                     </a>
                   </Label>
-                </div>
+                </div>{" "}
                 {/* Submit Button and Loading State */}
-                {isSubmitting && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Processing your appointment...</span>
-                      <span>{bookingProgress}%</span>
-                    </div>
-                    <Progress value={bookingProgress} className="w-full" />
-                  </div>
-                )}{" "}
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !formData.termsAccepted}
+                  disabled={
+                    createAppointmentMutation.isPending ||
+                    !formData.termsAccepted
+                  }
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold disabled:opacity-50"
                 >
-                  {isSubmitting ? (
+                  {createAppointmentMutation.isPending ? (
                     <>
                       <svg
                         className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block"

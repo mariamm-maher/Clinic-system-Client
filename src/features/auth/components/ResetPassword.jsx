@@ -1,52 +1,134 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 import LeftSide from "./LeftSide";
+import useAuthStore from "@/stores/authStore";
 import {
   Building2,
-  Mail,
+  Lock,
+  Eye,
+  EyeOff,
   ArrowLeft,
   Loader2,
-  Send,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
 export default function ResetPassword() {
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const confirmPasswordReset = useAuthStore(
+    (state) => state.confirmPasswordReset
+  );
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isEmailSent, setIsEmailSent] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
+
+  const token = searchParams.get("token");
+
+  useEffect(() => {
+    if (!token) {
+      setError(
+        "Invalid or missing reset token. Please request a new password reset."
+      );
+    }
+  }, [token]);
+
+  const validatePassword = (password) => {
+    const errors = {};
+
+    if (password.length < 8) {
+      errors.length = "Password must be at least 8 characters long";
+    }
+
+    if (!/(?=.*[a-z])/.test(password)) {
+      errors.lowercase = "Password must contain at least one lowercase letter";
+    }
+
+    if (!/(?=.*[A-Z])/.test(password)) {
+      errors.uppercase = "Password must contain at least one uppercase letter";
+    }
+
+    if (!/(?=.*\d)/.test(password)) {
+      errors.number = "Password must contain at least one number";
+    }
+
+    if (!/(?=.*[@$!%*?&])/.test(password)) {
+      errors.special =
+        "Password must contain at least one special character (@$!%*?&)";
+    }
+
+    return errors;
+  };
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+
+    if (newPassword) {
+      const errors = validatePassword(newPassword);
+      setValidationErrors(errors);
+    } else {
+      setValidationErrors({});
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
+    // Validate passwords
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    const passwordErrors = validatePassword(password);
+    if (Object.keys(passwordErrors).length > 0) {
+      setError("Please fix password requirements");
+      setValidationErrors(passwordErrors);
+      setIsLoading(false);
+      return;
+    }
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await confirmPasswordReset(token, password);
 
-      // Here you would typically call your password reset API
-      // await authService.resetPassword(email);
-
-      setIsEmailSent(true);
-      console.log("Password reset email sent to:", email);
+      if (result.success) {
+        setIsSuccess(true);
+        toast.success(result.message || "Password reset successfully!");
+      } else {
+        setError(result.error || "Failed to reset password");
+        toast.error(result.error || "Failed to reset password");
+      }
     } catch (err) {
       console.error("Reset password error:", err);
-      setError("Failed to send reset email. Please try again.");
+      const errorMessage =
+        err.error || "Failed to reset password. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleBackToLogin = () => {
-    window.location.href = "/login";
+    navigate("/login");
   };
-  if (isEmailSent) {
+
+  // Success state
+  if (isSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
         <LeftSide />
@@ -58,7 +140,7 @@ export default function ResetPassword() {
             <div className="lg:hidden text-center mb-8">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
                 <Building2 className="w-8 h-8 text-white" />
-              </div>{" "}
+              </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Dr. Ehab Clinic
               </h1>
@@ -73,24 +155,15 @@ export default function ResetPassword() {
                   <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
                 <CardTitle className="text-2xl text-gray-900 font-bold">
-                  Check Your Email
+                  Password Reset Successfully
                 </CardTitle>
                 <p className="text-gray-600 mt-2">
-                  We've sent a password reset link to your email address.
+                  Your password has been updated. You can now sign in with your
+                  new password.
                 </p>
               </CardHeader>
 
               <CardContent className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Email sent to:</strong> {email}
-                  </p>
-                  <p className="text-sm text-blue-700 mt-2">
-                    If you don't see the email in your inbox, please check your
-                    spam folder.
-                  </p>
-                </div>
-
                 <Button
                   type="button"
                   onClick={handleBackToLogin}
@@ -99,19 +172,6 @@ export default function ResetPassword() {
                   <ArrowLeft className="w-5 h-5 mr-2" />
                   Back to Login
                 </Button>
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEmailSent(false);
-                      setEmail("");
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-700 hover:underline font-medium"
-                  >
-                    Try a different email address
-                  </button>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -119,6 +179,71 @@ export default function ResetPassword() {
       </div>
     );
   }
+
+  // Invalid token state
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
+        <LeftSide />
+
+        {/* Right Side - Error Message */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+          <div className="w-full max-w-md">
+            {/* Mobile Logo */}
+            <div className="lg:hidden text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+                <Building2 className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Dr. Ehab Clinic
+              </h1>
+              <p className="text-gray-600">
+                Professional Healthcare Management
+              </p>
+            </div>
+
+            <Card className="shadow-xl border-0 bg-white">
+              <CardHeader className="text-center pb-6">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="w-8 h-8 text-red-600" />
+                </div>
+                <CardTitle className="text-2xl text-gray-900 font-bold">
+                  Invalid Reset Link
+                </CardTitle>
+                <p className="text-gray-600 mt-2">
+                  This password reset link is invalid or has expired. Please
+                  request a new one.
+                </p>
+              </CardHeader>
+
+              <CardContent className="space-y-6">
+                <Link to="/forget-password">
+                  <Button
+                    type="button"
+                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold"
+                  >
+                    Request New Reset Link
+                  </Button>
+                </Link>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBackToLogin}
+                  className="w-full h-12"
+                >
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Back to Login
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Reset password form
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
       <LeftSide />
@@ -130,20 +255,20 @@ export default function ResetPassword() {
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
               <Building2 className="w-8 h-8 text-white" />
-            </div>{" "}
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Dr. Ehab Clinic
             </h1>
             <p className="text-gray-600">Professional Healthcare Management</p>
           </div>
+
           <Card className="shadow-xl border-0 bg-white">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-2xl text-gray-900 font-bold">
-                Reset Your Password
+                Set New Password
               </CardTitle>
               <p className="text-gray-600 mt-2">
-                Enter your email address and we'll send you a link to reset your
-                password.
+                Enter your new password below. Make sure it's strong and secure.
               </p>
             </CardHeader>
 
@@ -157,41 +282,129 @@ export default function ResetPassword() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* New Password */}
                 <div className="space-y-2">
                   <Label
-                    htmlFor="email"
+                    htmlFor="password"
                     className="text-sm font-semibold text-gray-700"
                   >
-                    Email Address
+                    New Password
                   </Label>
                   <div className="relative">
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email address"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter new password"
+                      value={password}
+                      onChange={handlePasswordChange}
                       required
-                      className="h-12 pl-12 border-2 focus:border-blue-500 transition-all duration-200"
+                      className="h-12 pl-12 pr-12 border-2 focus:border-blue-500 transition-all duration-200"
                     />
-                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
                   </div>
+
+                  {/* Password Requirements */}
+                  {password && (
+                    <div className="space-y-1 text-xs">
+                      {Object.entries(validationErrors).map(
+                        ([key, message]) => (
+                          <p
+                            key={key}
+                            className="text-red-600 flex items-center"
+                          >
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            {message}
+                          </p>
+                        )
+                      )}
+                      {Object.keys(validationErrors).length === 0 && (
+                        <p className="text-green-600 flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Password meets all requirements
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="confirmPassword"
+                    className="text-sm font-semibold text-gray-700"
+                  >
+                    Confirm New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="h-12 pl-12 pr-12 border-2 focus:border-blue-500 transition-all duration-200"
+                    />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+
+                  {confirmPassword && password !== confirmPassword && (
+                    <p className="text-red-600 text-xs flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Passwords do not match
+                    </p>
+                  )}
+
+                  {confirmPassword && password === confirmPassword && (
+                    <p className="text-green-600 text-xs flex items-center">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Passwords match
+                    </p>
+                  )}
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={
+                    isLoading ||
+                    Object.keys(validationErrors).length > 0 ||
+                    password !== confirmPassword
+                  }
                   className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold transition-all duration-300 disabled:opacity-50"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="animate-spin h-5 w-5 mr-3" />
-                      Sending Reset Link...
+                      Resetting Password...
                     </>
                   ) : (
                     <>
-                      <Send className="w-5 h-5 mr-3" />
-                      Send Reset Link
+                      <Lock className="w-5 h-5 mr-3" />
+                      Reset Password
                     </>
                   )}
                 </Button>
@@ -208,7 +421,7 @@ export default function ResetPassword() {
                 </button>
               </div>
             </CardContent>
-          </Card>{" "}
+          </Card>
         </div>
       </div>
     </div>

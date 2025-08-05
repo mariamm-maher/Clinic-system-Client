@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useLoginForm } from "../hooks/useAuth.jsx";
+import { toast } from "sonner";
+import { useAuthStore } from "@/stores";
+import { navigateByRole } from "@/lib/utils";
 import LeftSide from "./LeftSide";
 import {
   Building2,
@@ -20,29 +21,81 @@ import {
   LogIn,
 } from "lucide-react";
 
+// Google OAuth configuration - moved outside component to prevent re-renders
+const GOOGLE_CLIENT_ID =
+  "1046697718146-en8fc55dv382vsgtclvv3pgrco16oj3f.apps.googleusercontent.com";
+const GOOGLE_REDIRECT_URI = "http://localhost:4000/api/auth/google/callback";
+const GOOGLE_SCOPE = "openid email profile";
+
+// Construct Google OAuth URL for login
+const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(
+  GOOGLE_REDIRECT_URI
+)}&response_type=code&scope=${encodeURIComponent(
+  GOOGLE_SCOPE
+)}&access_type=offline&prompt=consent`;
+
 export default function Login() {
+  const navigate = useNavigate();
+  const signIn = useAuthStore((state) => state.signIn);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
   const [showPassword, setShowPassword] = useState(false);
-
-  const { login, isLoading, error } = useLoginForm();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login(formData);
+    setIsLoading(true);
+
+    try {
+      const result = await signIn({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (result?.success) {
+        toast.success("Login successful! Welcome back.");
+
+        // Role-based navigation using utility function
+        const { role } = result.data;
+        navigateByRole(navigate, role);
+      }
+    } catch (error) {
+      if (error.details && Array.isArray(error.details)) {
+        const errorList = error.details.map(
+          (detail) => detail.message || detail
+        );
+        const formattedErrors = errorList.map((err) => `• ${err}`).join("\n");
+        toast.error(
+          <div>
+            <div className="whitespace-pre-line text-sm">{formattedErrors}</div>
+          </div>,
+          {
+            duration: 6000,
+            style: {
+              minWidth: "350px",
+              maxWidth: "500px",
+            },
+          }
+        );
+      } else if (error?.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("Invalid email or password. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
-
   const handleGoogleLogin = () => {
-    // Implement Google OAuth login
     console.log("Google login initiated");
-    window.location.href = "/auth/google";
+    window.location.href = GOOGLE_AUTH_URL;
   };
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
@@ -66,17 +119,8 @@ export default function Login() {
                 Welcome back
               </CardTitle>
               <p className="text-gray-600">Sign in to access your portal</p>
-            </CardHeader>
-
+            </CardHeader>{" "}
             <CardContent className="space-y-6">
-              {error && (
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-800">
-                    {error}
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {/* Google Login Button */}
               <Button
                 type="button"
@@ -193,7 +237,7 @@ export default function Login() {
                     </Label>{" "}
                   </div>{" "}
                   <Link
-                    to="/reset-password"
+                    to="/forget-password"
                     className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
                   >
                     Forgot password?
@@ -230,15 +274,6 @@ export default function Login() {
                     className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
                   >
                     Create one
-                  </Link>
-                </div>
-                <div className="text-center">
-                  <Link
-                    to="/"
-                    className="inline-flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-1" />
-                    Back to website
                   </Link>
                 </div>
               </div>

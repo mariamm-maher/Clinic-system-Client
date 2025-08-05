@@ -8,9 +8,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 import { clinicConfig } from "@/lib/config";
 
 export default function ContactInfo() {
+  const { t } = useTranslation();
+
   return (
     <section id="contact" className="py-16 bg-white">
       <div className="container mx-auto px-4">
@@ -20,7 +23,7 @@ export default function ContactInfo() {
             <Card className="h-full">
               <CardHeader>
                 <CardTitle className="text-xl text-blue-600">
-                  Location
+                  {t("contact.location")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -43,10 +46,11 @@ export default function ContactInfo() {
 
           {/* Contact Details */}
           <div className="space-y-6">
+            {" "}
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl text-blue-600">
-                  Get in Touch
+                  {t("contact.getInTouch")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -74,13 +78,12 @@ export default function ContactInfo() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Address</h3>
-                    <p className="text-gray-600">
-                      {clinicConfig.contact.address}
-                    </p>
+                    <h3 className="font-semibold text-gray-900">
+                      {t("contact.addressLabel")}
+                    </h3>
+                    <p className="text-gray-600">{t("contact.address")}</p>
                   </div>
                 </div>
-
                 {/* Phone */}
                 <div className="flex items-start space-x-3">
                   <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
@@ -99,7 +102,9 @@ export default function ContactInfo() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Phone</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {t("contact.phoneLabel")}
+                    </h3>
                     <a
                       href={`tel:${clinicConfig.contact.phone}`}
                       className="text-green-600 hover:text-green-700 font-medium"
@@ -107,11 +112,10 @@ export default function ContactInfo() {
                       {clinicConfig.contact.phone}
                     </a>
                     <p className="text-sm text-gray-500">
-                      Click to call on mobile
+                      {t("contact.clickToCall")}
                     </p>
                   </div>
                 </div>
-
                 {/* Email */}
                 <div className="flex items-start space-x-3">
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
@@ -130,17 +134,20 @@ export default function ContactInfo() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Email</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {t("contact.emailLabel")}
+                    </h3>
                     <a
                       href={`mailto:${clinicConfig.contact.email}`}
                       className="text-blue-600 hover:text-blue-700 font-medium"
                     >
                       {clinicConfig.contact.email}
                     </a>
-                    <p className="text-sm text-gray-500">Send us an email</p>
+                    <p className="text-sm text-gray-500">
+                      {t("contact.sendEmail")}
+                    </p>
                   </div>
                 </div>
-
                 {/* Office Hours */}
                 <div className="flex items-start space-x-3">
                   <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
@@ -160,20 +167,20 @@ export default function ContactInfo() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      Office Hours
+                      {t("contact.hours.title")}
                     </h3>
                     <div className="text-gray-600 text-sm space-y-1">
-                      <p>Monday - Friday: 9:00 AM - 5:00 PM</p>
-                      <p>Saturday: 9:00 AM - 1:00 PM</p> <p>Sunday: Closed</p>
+                      <p>{t("contact.hours.monday")}</p>
+                      <p>{t("contact.hours.saturday")}</p>
+                      <p>{t("contact.hours.sunday")}</p>
                     </div>
                   </div>
                 </div>
-
-                <Separator className="my-6" />
-
-                {/* Quick Actions */}
+                <Separator className="my-6" /> {/* Quick Actions */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900">Quick Actions</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    {t("contact.quickActions")}
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <TooltipProvider>
                       <Tooltip>
@@ -193,13 +200,14 @@ export default function ContactInfo() {
                                   d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                                 />
                               </svg>
-                              Call Now
+                              {t("contact.callNow")}
                             </a>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>
-                            Call us directly at {clinicConfig.contact.phone}
+                            {t("contact.callTooltip")}{" "}
+                            {clinicConfig.contact.phone}
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -223,13 +231,14 @@ export default function ContactInfo() {
                                   d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                 />
                               </svg>
-                              Send Email
+                              {t("contact.sendEmailButton")}
                             </a>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>
-                            Send us an email at {clinicConfig.contact.email}
+                            {t("contact.emailTooltip")}{" "}
+                            {clinicConfig.contact.email}
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -254,10 +263,11 @@ export default function ContactInfo() {
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
-                      Book Appointment Online
+                      {t("contact.bookAppointmentOnline")}
                     </a>
                   </Button>
-                </div>              </CardContent>
+                </div>
+              </CardContent>
             </Card>
           </div>
         </div>

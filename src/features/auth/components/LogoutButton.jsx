@@ -9,7 +9,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useAuth } from "../hooks/useAuth.jsx";
+import { useAuthStore } from "@/stores";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function LogoutButton({
   variant = "outline",
@@ -17,11 +19,22 @@ export default function LogoutButton({
   className = "",
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { logout, isLoading } = useAuth();
-
+  const [isLoading, setIsLoading] = useState(false);
+  const signOut = useAuthStore((state) => state.signOut);
+  const navigate = useNavigate();
   const handleLogout = async () => {
-    await logout();
-    setIsOpen(false);
+    setIsLoading(true);
+    try {
+      await signOut();
+      setIsOpen(false);
+      toast.success("Signed out successfully");
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to sign out. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

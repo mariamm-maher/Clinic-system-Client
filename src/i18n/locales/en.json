@@ -26,6 +26,7 @@
     "other": "Other",
     "appointmentDetails": "Appointment Details",
     "preferredDate": "Preferred Date",
+    "selectDay": "Select a day",
     "preferredTime": "Preferred Time",
     "visitType": "Visit Type",
     "newPatient": "New Patient Consultation",
@@ -52,19 +53,71 @@
     "successTitle": "Appointment Booked Successfully!",
     "successMessage": "Thank you for booking an appointment with Dr. Ehab Clinic. We'll contact you within 24 hours to confirm your appointment details.",
     "successNote": "Please arrive 15 minutes early for your appointment and bring a valid ID and insurance card.",
-    "bookAnother": "Book Another Appointment"
+    "bookAnother": "Book Another Appointment",
+    "days": {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday"
+    }
   },
   "doctorProfile": {
+    "clinic": "Dr. Ehab Clinic",
     "title": "Meet Dr. Ehab",
     "subtitle": "Board-Certified Internal Medicine Physician",
     "bio": "Dr. Ehab is a board-certified internal medicine physician with over 15 years of experience providing comprehensive healthcare for adults. He is dedicated to preventive care, chronic disease management, and building lasting relationships with his patients.",
-    "credentials": "Credentials & Education",
+    "hero": {
+      "excellence": "EXCELLENCE IN",
+      "healthcare": "HEALTHCARE",
+      "withDoctor": "WITH",
+      "subtitle": "Experience compassionate, comprehensive internal medicine care with a physician who puts your health and well-being first."
+    },
+    "services": {
+      "onlineBooking": {
+        "title": "Smart Appointment Booking",
+        "description": "Book appointments 24/7 with our intelligent scheduling system that fits your busy lifestyle."
+      },
+      "secureRecords": {
+        "title": "Secure Patient Records",
+        "description": "Your medical history is safely stored and accessible anytime with bank-level encryption."
+      },
+      "comprehensiveCare": {
+        "title": "Comprehensive Care",
+        "description": "Complete internal medicine services from prevention to treatment and ongoing health management."
+      },
+      "digitalHealth": {
+        "title": "Digital Health Platform",
+        "description": "Access your health information, test results, and communicate with our team from anywhere."
+      }
+    },
+    "credentials": [
+      "Board Certified Internal Medicine",
+      "MD Cairo University School of Medicine",
+      "Residency Johns Hopkins Hospital",
+      "Member American College of Physicians"
+    ],
     "specialties": "Specialties",
     "experience": "15+ Years Experience",
     "patients": "1000+ Patients Treated",
-    "bookAppointment": "Book Appointment with Dr. Ehab"
+    "bookAppointment": "Book Appointment "
   },
   "contact": {
+    "location": "Location",
+    "getInTouch": "Get in Touch",
+    "addressLabel": "Address",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "clickToCall": "Click to call on mobile",
+    "sendEmail": "Send us an email",
+    "quickActions": "Quick Actions",
+    "callNow": "Call Now",
+    "sendEmailButton": "Send Email",
+    "callTooltip": "Call us directly at",
+    "emailTooltip": "Send us an email at",
+    "bookAppointmentOnline": "Book Appointment Online",
     "address": "123 Health Ave, City, ZIP",
     "phone": "(555) 123-4567",
     "email": "info@drehabclinic.com",
