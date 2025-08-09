@@ -3,51 +3,76 @@ import apiClient from "@/config/axiosConfig";
 
 /**
  * Create a new staff member
- * @param {Object} staffData - Staff information
- * @param {string} staffData.name - Full name of staff member
- * @param {string} staffData.email - Email address
- * @param {string} staffData.phone - Contact phone number
- * @param {string} staffData.role - Staff role/position
- * @param {string} staffData.specialization - Area of specialization if applicable
- * @param {string} staffData.licenseNumber - Professional license number if applicable
- * @param {File} staffData.avatar - Staff profile photo
- * @param {File[]} staffData.documents - Professional documents/certifications
+ * @param {Object} staffData - Staff information in the required API format
  * @returns {Promise<Object>} Created staff member data
  */
 export const createStaff = async (staffData) => {
   try {
-    // Create FormData for file upload
-    const formData = new FormData();
+    // Check if we need to handle file uploads
+    const hasFiles = 
+      staffData.identification?.nationalIDPhoto?.front ||
+      staffData.identification?.nationalIDPhoto?.back ||
+      staffData.professional?.qualifications?.some(q => q.certificatePhoto);
 
-    // Add basic staff information
-    formData.append("name", staffData.name);
-    formData.append("email", staffData.email);
-    formData.append("phone", staffData.phone);
-    formData.append("role", staffData.role);
-    formData.append("specialization", staffData.specialization || "");
-    formData.append("licenseNumber", staffData.licenseNumber || "");
-
-    // Add profile photo if provided
-    if (staffData.avatar) {
-      formData.append("avatar", staffData.avatar);
-    }
-
-    // Add professional documents if provided
-    if (staffData.documents && staffData.documents.length > 0) {
-      staffData.documents.forEach((doc, index) => {
-        formData.append(`documents[${index}]`, doc);
+    if (hasFiles) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      
+      // Add JSON data as a string
+      const jsonData = {
+        name: staffData.name,
+        email: staffData.email,
+        password: staffData.password,
+        personalInfo: staffData.personalInfo,
+        identification: {
+          nationalID: staffData.identification.nationalID
+        },
+        professional: {
+          ...staffData.professional,
+          qualifications: staffData.professional.qualifications.map(q => ({
+            degree: q.degree,
+            institution: q.institution,
+            year: q.year
+          }))
+        }
+      };
+      
+      formData.append('data', JSON.stringify(jsonData));
+      
+      // Add files
+      if (staffData.identification?.nationalIDPhoto?.front) {
+        formData.append('nationalIDFront', staffData.identification.nationalIDPhoto.front);
+      }
+      if (staffData.identification?.nationalIDPhoto?.back) {
+        formData.append('nationalIDBack', staffData.identification.nationalIDPhoto.back);
+      }
+      
+      // Add qualification certificate photos
+      staffData.professional.qualifications.forEach((qual, index) => {
+        if (qual.certificatePhoto) {
+          formData.append(`qualificationCert_${index}`, qual.certificatePhoto);
+        }
       });
+
+      const response = await apiClient.post("/api/staff", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      return response.data;
+    } else {
+      // Send as JSON if no files
+      const response = await apiClient.post("/api/staff", staffData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response.data;
     }
-
-    const response = await apiClient.post("/api/staff", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    return response.data;
   } catch (error) {
-    console.error("Error creating staff:", error);
+    // console.error("Error creating staff:", error);
     throw error.response?.data || error.message;
   }
 };

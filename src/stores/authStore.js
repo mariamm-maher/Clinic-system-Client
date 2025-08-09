@@ -131,13 +131,8 @@ const useAuthStore = create(
 
       refreshToken: async () => {
         try {
-          const { accessToken: currentToken } = get();
-
-          if (!currentToken) {
-            throw new Error("No access token available");
-          }
-
-          const result = await refreshAuthToken(currentToken);
+          // Call refresh token API (refresh token sent via HTTP-only cookie)
+          const result = await refreshAuthToken();
 
           if (result.success) {
             const { accessToken: newToken, user, role } = result.data;
@@ -203,6 +198,23 @@ const useAuthStore = create(
 
       getToken: () => {
         return get().accessToken;
+      },
+
+      // Set access token (used by refresh token flow)
+      setAccessToken: (newAccessToken) => {
+        console.log("🔄 Setting new access token in Zustand store...");
+        
+        set({
+          accessToken: newAccessToken,
+          isAuthenticated: true,
+        });
+        
+        // Update axios headers immediately
+        apiClient.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${newAccessToken}`;
+        
+        console.log("✅ Access token updated in Zustand store and axios headers");
       },
 
       // Initialize auth state (call this on app startup)

@@ -47,51 +47,61 @@ export const forgetPassword = async (email) => {
   }
 };
 
-export const refreshAuthToken = async (refreshToken) => {
+export const refreshAuthToken = async () => {
   try {
-    const response = await apiClient.post("/api/auth/refresh", {
-      refreshToken,
-    });
-
-    return {
-      success: true,
-      data: response.data,
-      message: "Token refreshed successfully",
-    };
-  } catch (error) {
-    console.error("Refresh Token API Error:", error);
-
-    if (error.response) {
-      const { status, data } = error.response;
-
-      switch (status) {
-        case 401:
-          return {
-            success: false,
-            error: "Invalid or expired refresh token",
-          };
-        case 403:
-          return {
-            success: false,
-            error: "Refresh token not provided",
-          };
-        default:
-          return {
-            success: false,
-            error: data?.message || "Token refresh failed",
-          };
+    console.log("🔄 Calling refresh token API (GET request)...");
+    
+    // Refresh token is sent via HTTP-only cookie automatically
+    const response = await apiClient.get("/api/auth/refresh-token");
+    
+    console.log("✅ Refresh token API response:", response.data);
+    
+    // Expected response format:
+    // {
+    //   "success": true,
+    //   "message": "Token refreshed successfully",
+    //   "data": {
+    //     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.newtoken.signature"
+    //   }
+    // }
+    
+    if (response.data?.success && response.data?.data?.accessToken) {
+      const newAccessToken = response.data.data.accessToken;
+      console.log("✅ New access token received:", `${newAccessToken.substring(0, 20)}...`);
+      
+      // Update Zustand store with new access token
+      try {
+        // Dynamic import to avoid circular dependencies
+        const { default: useAuthStore } = await import("@/stores/authStore");
+        
+        // Get the store instance and update the access token
+        const authStore = useAuthStore.getState();
+        console.log("🔄 Updating Zustand store with new access token...");
+        
+        // Update the access token in the store
+        authStore.setAccessToken(newAccessToken);
+        
+        console.log("✅ Successfully updated Zustand store with new access token");
+        
+        // Also update axios default headers for immediate use
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        console.log("✅ Updated axios default headers with new token");
+        
+      } catch (storeError) {
+        console.error("❌ Failed to update Zustand store:", storeError);
+        // Continue anyway, the axios interceptor will handle localStorage update
       }
-    } else if (error.request) {
-      return {
-        success: false,
-        error: "Network error - please check your connection",
-      };
-    } else {
-      return {
-        success: false,
-        error: "Token refresh request failed",
-      };
     }
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ Refresh Token API Error:", error);
+    console.error("❌ Error details:", {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw error.response?.data || error.message;
   }
 };
 

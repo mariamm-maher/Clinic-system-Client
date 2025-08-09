@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { toast } from "sonner";
+import { createStaff } from "@/features/doctor-dashboard/services/doctorServices";
 
 // Constants
 export const TOTAL_STEPS = 4;
-const STORAGE_KEY = "staffFormData";
+const STORAGE_KEY = "staff-form-data";
 
 // Initial form data structure
 const initialFormData = {
@@ -67,6 +69,52 @@ const loadInitialData = () => {
     console.warn("Failed to load form data from sessionStorage:", error);
   }
   return initialFormData;
+};
+
+// Transform form data to API format
+const transformFormDataForAPI = (formData) => {
+  return {
+    name: formData.basicInfo.name,
+    email: formData.basicInfo.email,
+    password: formData.basicInfo.password,
+    personalInfo: {
+      phone: formData.personalInfo.phone,
+      age: parseInt(formData.personalInfo.age) || 0,
+      gender: formData.personalInfo.gender,
+      address: {
+        street: formData.personalInfo.address.street,
+        city: formData.personalInfo.address.city,
+        state: formData.personalInfo.address.state,
+        zipCode: formData.personalInfo.address.zipCode,
+        country: formData.personalInfo.address.country
+      },
+      emergencyContact: {
+        name: formData.personalInfo.emergencyContact.name,
+        phone: formData.personalInfo.emergencyContact.phone,
+        relationship: formData.personalInfo.emergencyContact.relationship
+      }
+    },
+    identification: {
+      nationalID: formData.identification.nationalID,
+      nationalIDPhoto: {
+        front: formData.identification.nationalIDPhoto.front,
+        back: formData.identification.nationalIDPhoto.back
+      }
+    },
+    professional: {
+      department: formData.professionalInfo.department,
+      position: formData.professionalInfo.position,
+      experience: {
+        years: parseInt(formData.professionalInfo.experience.years) || 0
+      },
+      qualifications: formData.professionalInfo.qualifications.map(qual => ({
+        degree: qual.degree,
+        institution: qual.institution,
+        year: parseInt(qual.year) || 0,
+        certificatePhoto: qual.certificatePhoto
+      }))
+    }
+  };
 };
 
 export const useStaffFormStore = create(
@@ -280,27 +328,60 @@ export const useStaffFormStore = create(
       const state = get();
 
       // Validate all steps before submission
-      // if (!state.validateAllSteps()) {
-      //   return false;
-      // }
+      if (!state.validateAllSteps()) {
+        return { success: false, error: "Please fix validation errors before submitting" };
+      }
 
       set({
         isLoading: true,
       });
 
       try {
-        // Prepare form data for API submission
-        const formDataToSubmit = {
-          ...state.formData,
-          // Add any additional processing here
-          submittedAt: new Date().toISOString(),
-        };
-        console.log("Creating staff member:", formDataToSubmit);
+        // Transform form data to API format
+        const apiData = transformFormDataForAPI(state.formData);
+        
+        console.log("Creating staff member with data:", apiData);
 
-        return true;
+        // Call the API
+        const result = await createStaff(apiData);
+        
+        console.log("Staff member created successfully:", result);
+        
+        // Show success toast
+        toast.success("Staff member created successfully!", {
+          description: "The new staff member has been added to the system.",
+          duration: 4000,
+        });
+        
+        // Clear form data after successful submission
+        state.clearFormData();
+        
+        set({
+          isSubmitted: true,
+        });
+
+        return { success: true, data: result };
       } catch (error) {
         console.error("Error creating staff member:", error);
-        return false;
+        
+        // Handle different types of errors
+        let errorMessage = "Failed to create staff member. Please try again.";
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+
+        // Show error toast
+        toast.error("Failed to create staff member", {
+          description: errorMessage,
+          duration: 5000,
+        });
+
+        return { success: false, error: errorMessage };
       } finally {
         set({ isLoading: false });
       }
