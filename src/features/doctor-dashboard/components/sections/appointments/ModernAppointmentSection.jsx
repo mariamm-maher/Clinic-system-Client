@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useScrollToTopOnRouteChange } from "@/hooks/useScrollToTop";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -49,6 +50,9 @@ import ModernBreadcrumb from "../../ModernBreadcrumb";
 export default function AppointmentSection() {
   const [currentPatient, setCurrentPatient] = useState(null);
   const [sessionStartTime, setSessionStartTime] = useState(null);
+  
+  // Scroll to top when this section is accessed
+  useScrollToTopOnRouteChange({ smooth: true, delay: 100 });
 
   // Real-time queue data (would come from WebSocket or API in real app)
   const [queueData, setQueueData] = useState({

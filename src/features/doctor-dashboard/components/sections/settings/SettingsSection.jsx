@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useScrollToTopOnRouteChange } from "@/hooks/useScrollToTop";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,9 @@ import { motion } from "framer-motion";
 import ModernBreadcrumb from "../../ModernBreadcrumb";
 
 export default function SettingsSection() {
+  // Scroll to top when this section is accessed
+  useScrollToTopOnRouteChange({ smooth: true, delay: 100 });
+  
   const [profileData, setProfileData] = useState({
     name: "Dr. Ehab",
     email: "doctor@clinic.com",

@@ -14,10 +14,10 @@ import StaffDashboard from "./features/staff-dashboard/index.jsx";
 import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "@/providers/QueryProvider";
 import {
-  OverviewSection,
+  ModernOverviewSection,
   ScheduleSection,
-  AppointmentSection,
-  AppointmentDetailsSection,
+  AppointmentsSection,
+  // AppointmentDetailsSection,
   PatientsSection,
   PatientProfile,
   NewVisit,
@@ -27,6 +27,43 @@ import {
   LayoutDemoSection,
   RefactoringCompletedSection,
 } from "./features/doctor-dashboard/components/sections";
+
+// Import individual staff management components
+import {
+  StaffOverview,
+  CreateStaff,
+  StaffDetail,
+} from "./features/doctor-dashboard/components/sections/staff";
+
+// Import create staff route components
+import {
+  CreateStaffContainer,
+  BasicInfoRoute,
+  PersonalInfoRoute,
+  ProfessionalInfoRoute,
+  ReviewRoute,
+} from "./features/doctor-dashboard/components/sections/staff/create-staff";
+
+// Import new visit route components
+import {
+  NewVisitContainer,
+  BasicInfoRoute as NewVisitBasicInfoRoute,
+  PastHistoryRoute,
+  MainComplaintRoute,
+  ChecksRoute,
+  ExaminationRoute,
+  InvestigationsRoute,
+  PrescriptionRoute,
+} from "./features/doctor-dashboard/components/sections/newVisit";
+
+// Import staff details route components
+import {
+  StaffDetailsContainer,
+  OverviewRoute,
+  BasicInfoRoute as StaffBasicInfoRoute,
+  PersonalInfoRoute as StaffPersonalInfoRoute,
+  ProfessionalInfoRoute as StaffProfessionalInfoRoute,
+} from "./features/doctor-dashboard/components/sections/staff/staff-details";
 
 // Import auth components from index file
 import {
@@ -84,27 +121,75 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<OverviewSection />} />
+            <Route index element={<ModernOverviewSection />} />
             <Route path="schedule" element={<ScheduleSection />} />
-            <Route path="appointments" element={<AppointmentSection />} />
-            <Route
+            <Route path="appointments" element={<AppointmentsSection />} />
+            {/* <Route
               path="appointments/:id"
               element={<AppointmentDetailsSection />}
-            />
+            /> */}
             <Route path="patients" element={<PatientsSection />} />
             <Route path="patients/:id" element={<PatientProfile />} />
+
+            {/* New visit with tab-based navigation */}
             <Route
               path="patients/:patientId/new-visit"
-              element={<NewVisit />}
+              element={
+                <ProtectedRoute roles="doctor">
+                  <NewVisitContainer />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="patients/:patientId/new-visit/:tab"
+              element={
+                <ProtectedRoute roles="doctor">
+                  <NewVisitContainer />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="staff"
               element={
                 <ProtectedRoute roles="doctor">
-                  <StaffSection />
+                  <StaffOverview />
                 </ProtectedRoute>
               }
             />
+            {/* Nested routes for create staff workflow */}
+            <Route
+              path="staff/create"
+              element={
+                <ProtectedRoute roles="doctor">
+                  <CreateStaffContainer />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="1" replace />} />
+              <Route path="1" element={<BasicInfoRoute />} />
+              <Route path="2" element={<PersonalInfoRoute />} />
+              <Route path="3" element={<ProfessionalInfoRoute />} />
+              <Route path="4" element={<ReviewRoute />} />
+            </Route>
+            {/* Nested routes for staff details workflow */}
+            <Route
+              path="staff/:id"
+              element={
+                <ProtectedRoute roles="doctor">
+                  <StaffDetailsContainer />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<OverviewRoute />} />
+              <Route path="basic" element={<StaffBasicInfoRoute />} />
+              <Route path="personal" element={<StaffPersonalInfoRoute />} />
+              <Route
+                path="professional"
+                element={<StaffProfessionalInfoRoute />}
+              />
+            </Route>
+
             <Route path="statistics" element={<StatisticsSection />} />
             <Route path="settings" element={<SettingsSection />} />
             <Route path="layout-demo" element={<LayoutDemoSection />} />

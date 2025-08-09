@@ -20,6 +20,22 @@ const navigationItems = [
   { id: "settings", label: "Settings", path: "/doctor-dashboard/settings" },
 ];
 
+// Step mapping for create staff workflow
+const createStaffSteps = {
+  1: "Basic Information",
+  2: "Personal Details",
+  3: "Professional Info",
+  4: "Review & Submit",
+};
+
+// Tab mapping for staff details workflow
+const staffDetailsTabs = {
+  overview: "Overview",
+  basic: "Basic Information",
+  personal: "Personal Details",
+  professional: "Professional Info",
+};
+
 export default function Breadcrumb({ className }) {
   const location = useLocation();
   const pathSegments = location.pathname.split("/").filter(Boolean);
@@ -33,7 +49,6 @@ export default function Breadcrumb({ className }) {
     path: "/doctor-dashboard",
     isActive: location.pathname === "/doctor-dashboard",
   });
-
   // Add subsequent path segments
   let currentPath = "";
   pathSegments.forEach((segment, index) => {
@@ -42,7 +57,33 @@ export default function Breadcrumb({ className }) {
       return;
     }
 
-    currentPath += `/${segment}`;
+    currentPath += `/${segment}`; // Special handling for create staff steps
+    if (pathSegments.includes("create") && pathSegments.includes("staff")) {
+      const stepNumber = segment;
+      if (createStaffSteps[stepNumber]) {
+        const isLast = index === pathSegments.length - 1;
+        breadcrumbItems.push({
+          label: createStaffSteps[stepNumber],
+          path: currentPath,
+          isActive: isLast,
+        });
+        return;
+      }
+    }
+
+    // Special handling for staff details tabs
+    if (pathSegments.includes("staff") && !pathSegments.includes("create")) {
+      const tabName = segment;
+      if (staffDetailsTabs[tabName]) {
+        const isLast = index === pathSegments.length - 1;
+        breadcrumbItems.push({
+          label: staffDetailsTabs[tabName],
+          path: currentPath,
+          isActive: isLast,
+        });
+        return;
+      }
+    }
 
     // Find the matching navigation item or create a default one
     const navItem = navigationItems.find(
@@ -51,9 +92,23 @@ export default function Breadcrumb({ className }) {
 
     const isLast = index === pathSegments.length - 1;
 
+    // Special labels for common paths
+    let label = navItem?.label;
+    if (!label) {
+      switch (segment) {
+        case "create":
+          label = "Create New";
+          break;
+        case "edit":
+          label = "Edit";
+          break;
+        default:
+          label = segment.charAt(0).toUpperCase() + segment.slice(1);
+      }
+    }
+
     breadcrumbItems.push({
-      label:
-        navItem?.label || segment.charAt(0).toUpperCase() + segment.slice(1),
+      label,
       path: currentPath,
       isActive: isLast,
     });

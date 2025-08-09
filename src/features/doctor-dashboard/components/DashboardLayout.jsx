@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Menu, Bell, Search } from "lucide-react";
 import Sidebar from "./Sidebar";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 export default function DashboardLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Scroll to top when navigating between dashboard pages
+  const scrollRef = useScrollToTop({ smooth: true, delay: 100 });
 
   return (
     <TooltipProvider>
@@ -43,7 +47,9 @@ export default function DashboardLayout() {
                   >
                     <Menu className="w-5 h-5" />
                   </Button>
-                  <h1 className="font-semibold text-gray-900">ClinicCare</h1>
+                  <h1 className="font-semibold text-gray-900">
+                    Dr Ehab Clinic
+                  </h1>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
@@ -57,7 +63,7 @@ export default function DashboardLayout() {
             </header>
 
             {/* Main Content Area - Scrollable independently */}
-            <main className="flex-1 overflow-y-auto">
+            <main ref={scrollRef} className="flex-1 overflow-y-auto">
               <div className="p-4 lg:p-6">
                 <Outlet />
               </div>

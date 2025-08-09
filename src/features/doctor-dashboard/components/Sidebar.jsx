@@ -1,11 +1,6 @@
-import { useState, useEffect } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -55,7 +50,7 @@ const navigationItems = [
     subtitle: "Patient bookings",
     icon: Clock,
     path: "/doctor-dashboard/appointments",
-    badge: "3",
+    badge: null,
   },
   {
     id: "patients",
@@ -96,49 +91,32 @@ export default function Sidebar({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  // Get current active section from URL
-  const getCurrentSection = () => {
-    const path = location.pathname;
-
-    // Handle exact dashboard root path
-    if (path === "/doctor-dashboard" || path === "/doctor-dashboard/") {
-      return "overview";
-    }
-
-    const segments = path.split("/").filter(Boolean);
-
-    // Find the section after 'doctor-dashboard'
-    const dashboardIndex = segments.findIndex(
-      (segment) => segment === "doctor-dashboard"
-    );
-    if (dashboardIndex !== -1 && dashboardIndex + 1 < segments.length) {
-      return segments[dashboardIndex + 1];
-    }
-
-    // Default to overview if no specific section found
-    return "overview";
-  };
-
-  const activeSection = getCurrentSection();
-
-  // Handle navigation
-  const handleNavigation = (path) => {
-    navigate(path);
-    setIsMobileMenuOpen(false);
-  };
   return (
     <TooltipProvider>
+      {/* Mobile backdrop overlay */}
+      {isMobileMenuOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       <AnimatePresence mode="wait">
-        {/* Mobile backdrop overlay */}{" "}
         <motion.aside
           key={isCollapsed ? "collapsed" : "expanded"}
           className={cn(
-            "relative flex flex-col shadow-2xl overflow-hidden",
-            "fixed inset-y-0 left-0 z-50 lg:sticky lg:top-0 lg:h-screen lg:max-h-screen",
+            "relative flex flex-col shadow-2xl",
+            "fixed inset-y-0 left-0 z-50 lg:sticky lg:top-0",
+            "h-screen max-h-screen lg:h-screen lg:max-h-screen",
             "transition-all duration-300 ease-in-out",
-            isCollapsed ? "w-20" : "w-72",
+            "overflow-hidden", // Prevent default scrolling, we'll handle it internally
+            // Enhanced mobile responsiveness
+            "touch-pan-y", // Allow vertical touch scrolling
+            "overscroll-contain", // Prevent scroll chaining
             isMobileMenuOpen
               ? "translate-x-0 "
               : "-translate-x-full lg:translate-x-0"
@@ -146,7 +124,7 @@ export default function Sidebar({
           initial={{ opacity: 0 }}
           animate={{
             opacity: 1,
-            width: isCollapsed ? 80 : 384,
+            width: isCollapsed && !isMobileMenuOpen ? 80 : 300,
           }}
           exit={{ opacity: 0 }}
           transition={{
@@ -154,8 +132,8 @@ export default function Sidebar({
             ease: "easeOut",
           }}
           style={{
-            minWidth: isCollapsed ? "100px" : "300px",
-            maxWidth: isCollapsed ? "100px" : "300px",
+            minWidth: isCollapsed && !isMobileMenuOpen ? "90px" : "260px",
+            maxWidth: isCollapsed && !isMobileMenuOpen ? "90px" : "260px",
             height: "100vh",
             maxHeight: "100vh",
           }}
@@ -174,21 +152,33 @@ export default function Sidebar({
           </div>{" "}
           {/* Content with higher z-index */}
           <div className="relative z-10 flex flex-col h-full min-h-0">
-            <SidebarHeader
-              isCollapsed={isCollapsed}
-              setIsCollapsed={setIsCollapsed}
-            />{" "}
-            <div className="flex-1 min-h-0">
-              <NavigationMenu
-                navigationItems={navigationItems}
-                activeSection={activeSection}
-                isCollapsed={isCollapsed}
-                handleNavigation={handleNavigation}
+            {/* Header - Fixed at top */}
+            <div className="flex-shrink-0">
+              <SidebarHeader
+                isCollapsed={isCollapsed && !isMobileMenuOpen}
+                setIsCollapsed={setIsCollapsed}
+                isMobileMenuOpen={isMobileMenuOpen}
+                setIsMobileMenuOpen={setIsMobileMenuOpen}
               />
             </div>{" "}
-            {/* Logout Button at the bottom */}
-            <div className="p-4 border-t border-blue-100/30 flex-shrink-0">
-              {isCollapsed ? (
+            {/* Scrollable Navigation Area */}
+            <div
+              className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth
+                          scrollbar-thin scrollbar-thumb-blue-200/50 scrollbar-track-transparent 
+                          hover:scrollbar-thumb-blue-300/50 touch-pan-y overscroll-contain
+                          supports-[overflow:overlay]:overflow-overlay"
+            >
+              {" "}
+              <div className="h-full">
+                <NavigationMenu
+                  navigationItems={navigationItems}
+                  isCollapsed={isCollapsed && !isMobileMenuOpen}
+                />
+              </div>
+            </div>{" "}
+            {/* Footer - Fixed at bottom */}
+            <div className="flex-shrink-0 p-3 sm:p-4 border-t border-blue-100/30">
+              {isCollapsed && !isMobileMenuOpen ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -214,23 +204,35 @@ export default function Sidebar({
               ) : (
                 <LogoutButton
                   variant="ghost"
-                  size="default"
+                  size="sm"
                   className={cn(
-                    "w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50",
-                    "rounded-2xl p-4 h-auto min-h-[3rem] border border-transparent",
+                    "w-full justify-start text-gray-600 hover:text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-50",
+                    "rounded-xl p-2 h-auto min-h-[2.5rem] border border-transparent",
                     "hover:border-red-200/50 transition-all duration-300 hover:shadow-md",
                     "group relative overflow-hidden"
                   )}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-100 group-hover:bg-red-50 transition-all duration-300">
-                      <LogOut className="w-5 h-5 transition-all duration-300" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="font-semibold text-sm">Sign Out</span>
-                      <span className="text-xs text-gray-500 group-hover:text-red-500 transition-colors duration-300">
+                  {" "}
+                  {/* Background glow effect for hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-400/0 via-red-400/0 to-red-400/0 rounded-xl opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+                  {/* Icon container - matching navigation items */}
+                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-gray-100 group-hover:bg-red-50 group-hover:shadow-sm transition-all duration-300 relative">
+                    <LogOut className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-all duration-300" />
+                  </div>
+                  {/* Text content - matching navigation items */}
+                  <div className="flex-1 flex items-center justify-between ml-2 overflow-hidden">
+                    <div className="flex flex-col items-start min-w-0 flex-1">
+                      <span className="font-medium text-sm text-gray-900 group-hover:text-red-600 transition-colors duration-300 truncate">
+                        Sign Out
+                      </span>
+                      <span className="text-xs text-gray-500 group-hover:text-red-500 font-normal truncate transition-colors duration-300">
                         End session
                       </span>
+                    </div>
+
+                    {/* Arrow indicator - matching navigation items */}
+                    <div className="transition-all duration-300 opacity-0 group-hover:opacity-60">
+                      <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-red-500 transition-colors duration-300" />
                     </div>
                   </div>
                 </LogoutButton>

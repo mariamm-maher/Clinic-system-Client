@@ -12,8 +12,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import ModernBreadcrumb from "../../ModernBreadcrumb";
+import { useScrollToTopOnRouteChange } from "@/hooks/useScrollToTop";
 
 export default function StatisticsSection() {
+  // Scroll to top when this section is accessed
+  useScrollToTopOnRouteChange({ smooth: true, delay: 100 });
+  
   const monthlyStats = {
     totalPatients: 284,
     newPatients: 42,

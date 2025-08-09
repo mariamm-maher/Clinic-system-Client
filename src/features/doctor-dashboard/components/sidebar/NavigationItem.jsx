@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -9,14 +9,15 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 
-export default function NavigationItem({
-  item,
-  isActive,
-  isCollapsed,
-  onClick,
-  index,
-}) {
+export default function NavigationItem({ item, isCollapsed, index }) {
+  const location = useLocation();
   const IconComponent = item.icon;
+
+  // Check if current route matches this item's path
+  const isActive =
+    location.pathname === item.path ||
+    (item.path !== "/doctor-dashboard" &&
+      location.pathname.startsWith(item.path));
 
   const itemVariants = {
     hidden: {
@@ -37,62 +38,60 @@ export default function NavigationItem({
       },
     },
   };
-
   return (
     <motion.div variants={itemVariants} className="w-full overflow-hidden">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            onClick={onClick}
+          <Link
+            to={item.path}
             className={cn(
               "w-full justify-start relative group transition-all duration-300",
-              "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50",
-              "hover:border-blue-200/50 border border-transparent",
-              "rounded-2xl p-3 h-auto min-h-[3rem]",
-              "overflow-hidden",
+              "hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-purple-50/60",
+              "hover:border-blue-200/30 border border-transparent",
+              "rounded-xl p-2.5 h-auto min-h-[2.5rem]",
+              "overflow-hidden flex items-center",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
               isActive && [
                 "bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600",
-                "text-white shadow-lg shadow-blue-500/25",
-                "border-blue-300/50",
-                "hover:shadow-xl hover:shadow-blue-500/30",
+                "text-white shadow-md shadow-blue-500/20",
+                "border-blue-300/40",
+                "hover:shadow-lg hover:shadow-blue-500/25",
               ],
               isCollapsed && "justify-center px-2"
             )}
           >
+            {" "}
             {/* Background glow effect for active item */}
             {isActive && (
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-indigo-400/20 rounded-2xl blur-lg opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/15 via-purple-400/15 to-indigo-400/15 rounded-xl blur-md opacity-40" />
             )}
-
-            {/* Icon container */}
+            {/* Icon container */}{" "}
             <div
               className={cn(
-                "relative flex items-center justify-center rounded-xl transition-all duration-300",
-                "w-10 h-10 flex-shrink-0",
+                "relative flex items-center justify-center rounded-lg transition-all duration-300",
+                "w-8 h-8 flex-shrink-0",
                 isActive
-                  ? "bg-white/20 shadow-lg backdrop-blur-sm"
-                  : "bg-gray-100 group-hover:bg-white group-hover:shadow-md"
+                  ? "bg-white/20 shadow-sm backdrop-blur-sm"
+                  : "bg-gray-100 group-hover:bg-white group-hover:shadow-sm"
               )}
             >
+              {" "}
               <IconComponent
                 className={cn(
-                  "w-5 h-5 transition-all duration-300",
+                  "w-4 h-4 transition-all duration-300",
                   isActive
                     ? "text-white drop-shadow-sm"
                     : "text-gray-600 group-hover:text-blue-600"
                 )}
-              />
-
+              />{" "}
               {/* Simple active indicator */}
               {isActive && (
-                <div className="absolute inset-0 bg-white/10 rounded-xl opacity-30" />
+                <div className="absolute inset-0 bg-white/10 rounded-lg opacity-25" />
               )}
-            </div>
-
+            </div>{" "}
             {/* Text content */}
             {!isCollapsed && (
-              <div className="flex-1 flex items-center justify-between ml-3 overflow-hidden">
+              <div className="flex-1 flex items-center justify-between ml-2.5 overflow-hidden">
                 <div className="flex flex-col items-start min-w-0 flex-1">
                   <span
                     className={cn(
@@ -121,58 +120,40 @@ export default function NavigationItem({
                 </div>
 
                 <div className="flex items-center space-x-2 flex-shrink-0">
-                  {/* Badge if available */}
-                  {item.badge && (
-                    <Badge
-                      variant={isActive ? "secondary" : "outline"}
-                      className={cn(
-                        "text-xs",
-                        isActive && "bg-white/20 text-white border-white/30"
-                      )}
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
-
-                  {/* Arrow indicator */}
+                  {/* Arrow indicator */}{" "}
                   <div
                     className={cn(
                       "transition-all duration-300",
                       isActive
-                        ? "opacity-100"
-                        : "opacity-0 group-hover:opacity-70"
+                        ? "opacity-70"
+                        : "opacity-0 group-hover:opacity-50"
                     )}
                   >
+                    {" "}
                     <ChevronRight
                       className={cn(
-                        "w-4 h-4 transition-colors duration-300",
+                        "w-3.5 h-3.5 transition-colors duration-300",
                         isActive
-                          ? "text-white/80"
+                          ? "text-white/70"
                           : "text-gray-400 group-hover:text-blue-500"
                       )}
                     />
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Hover effect overlay */}
+            )}{" "}
+            {/* Hover effect overlay */}{" "}
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-purple-400/0 to-indigo-400/0 rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"
-              whileHover={{ opacity: 0.1 }}
+              className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-purple-400/0 to-indigo-400/0 rounded-xl opacity-0 group-hover:opacity-5 transition-opacity duration-300"
+              whileHover={{ opacity: 0.05 }}
             />
-          </Button>
+          </Link>
         </TooltipTrigger>
         <TooltipContent side="right">
           <div className="text-center">
             <p className="font-medium">{item.label}</p>
             {item.subtitle && (
               <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
-            )}
-            {item.badge && (
-              <Badge variant="outline" className="text-xs mt-1">
-                {item.badge}
-              </Badge>
             )}
           </div>
         </TooltipContent>
