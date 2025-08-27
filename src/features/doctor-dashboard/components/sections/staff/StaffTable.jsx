@@ -9,40 +9,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Edit, Clock, Phone, Mail, Shield, Users } from "lucide-react";
-import CompactSearchFilter from "./CompactSearchFilter";
+import { Eye, Edit, Clock, Phone, Mail, Shield, Users, UserX, UserCheck2 } from "lucide-react";
+
 
 export default function StaffTable({
   staff,
   onViewStaff,
-  onEditStaff,
-  searchTerm,
-  setSearchTerm,
-  shiftFilter,
-  setShiftFilter,
-  totalStaffCount,
+  onToggleStatus,
 }) {
-  const getShiftIcon = (shift) => {
-    return shift === "morning" ? "🌅" : "🌙";
+  const getStatusIcon = (status) => {
+    return status === "active" ? (
+      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+    ) : (
+      <div className="h-2 w-2 rounded-full bg-red-500"></div>
+    );
   };
 
-  const getShiftColor = (shift) => {
-    return shift === "morning"
-      ? "bg-orange-100 text-orange-700 border-orange-200"
-      : "bg-indigo-100 text-indigo-700 border-indigo-200";
+  const getStatusColor = (status) => {
+    return status === "active"
+      ? "bg-green-100 text-green-700 border-green-200"
+      : "bg-red-100 text-red-700 border-red-200";
   };
   return (
     <div className="overflow-x-auto">
-      {/* Compact Search Filter Header */}
-      <CompactSearchFilter
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        shiftFilter={shiftFilter}
-        setShiftFilter={setShiftFilter}
-        filteredCount={staff.length}
-        totalCount={totalStaffCount}
-        shifts={["morning", "night"]}
-      />
+
 
       <Table>
         <TableHeader>
@@ -57,7 +47,7 @@ export default function StaffTable({
               Security
             </TableHead>
             <TableHead className="font-semibold text-slate-700">
-              Schedule
+              Status
             </TableHead>
             <TableHead className="font-semibold text-slate-700">
               Phone
@@ -92,7 +82,7 @@ export default function StaffTable({
                     </div>
                     <div className="text-sm text-slate-500 flex items-center gap-1">
                       <Shield className="h-3 w-3" />
-                      ID: {member.id} • {member.role}
+                      ID: {member.id} 
                     </div>
                   </div>
                 </div>
@@ -104,9 +94,7 @@ export default function StaffTable({
                     <Mail className="h-4 w-4 text-slate-400" />
                     {member.email}
                   </div>
-                  <div className="text-xs text-slate-500">
-                    {member.department}
-                  </div>
+                
                 </div>
               </TableCell>
 
@@ -122,15 +110,14 @@ export default function StaffTable({
               </TableCell>
 
               <TableCell>
-                <Badge
-                  className={`${getShiftColor(
-                    member.shift
-                  )} font-medium px-3 py-1 flex items-center gap-2 w-fit`}
-                  variant="outline"
+                <div
+                  className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                    member.status
+                  )}`}
                 >
-                  <span>{getShiftIcon(member.shift)}</span>
-                  {member.shift.charAt(0).toUpperCase() + member.shift.slice(1)}
-                </Badge>
+                  {getStatusIcon(member.status)}
+                  <span className="capitalize">{member.status}</span>
+                </div>
               </TableCell>
 
               <TableCell>
@@ -153,17 +140,31 @@ export default function StaffTable({
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditStaff(member.id);
-                    }}
-                    className="h-8 w-8 p-0 hover:bg-indigo-100 hover:text-indigo-600"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
+                  {member.status === 'active' ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleStatus(member.id, member.status);
+                      }}
+                      className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
+                    >
+                      <UserX className="w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleStatus(member.id, member.status);
+                      }}
+                      className="h-8 w-8 p-0 hover:bg-green-100 hover:text-green-600"
+                    >
+                      <UserCheck2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

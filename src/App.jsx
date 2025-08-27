@@ -62,7 +62,6 @@ import {
   OverviewRoute,
   BasicInfoRoute as StaffBasicInfoRoute,
   PersonalInfoRoute as StaffPersonalInfoRoute,
-  ProfessionalInfoRoute as StaffProfessionalInfoRoute,
 } from "./features/doctor-dashboard/components/sections/staff/staff-details";
 
 // Import auth components from index file
@@ -184,10 +183,6 @@ function App() {
               <Route path="overview" element={<OverviewRoute />} />
               <Route path="basic" element={<StaffBasicInfoRoute />} />
               <Route path="personal" element={<StaffPersonalInfoRoute />} />
-              <Route
-                path="professional"
-                element={<StaffProfessionalInfoRoute />}
-              />
             </Route>
 
             <Route path="statistics" element={<StatisticsSection />} />

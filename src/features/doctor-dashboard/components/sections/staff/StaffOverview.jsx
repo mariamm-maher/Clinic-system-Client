@@ -1,116 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Plus, Users, Clock, UserCheck } from "lucide-react";
+import { Plus, Users, Clock, UserCheck, AlertTriangle, UserX, UserCheck2 } from "lucide-react";
 import ModernBreadcrumb from "../../ModernBreadcrumb";
+import CompactSearchFilter from "./CompactSearchFilter";
 import StaffTable from "./StaffTable";
 import { useScrollToTopOnRouteChange } from "@/hooks/useScrollToTop";
-
-// Mock data - replace with actual API calls
-const mockStaff = [
-  {
-    id: 1,
-    name: "Dr. Sarah Mitchell",
-    role: "Cardiologist",
-    department: "Cardiology",
-    email: "sarah.mitchell@clinic.com",
-    phone: "+1 (555) 123-4567",
-    status: "active",
-    shift: "morning",
-    experience: "12 years",
-    startDate: "2020-03-15",
-    currentPatients: 45,
-    rating: 4.9,
-    avatar: null,
-  },
-  {
-    id: 2,
-    name: "Jennifer Rodriguez",
-    role: "Head Nurse",
-    department: "Nursing",
-    email: "jennifer.rodriguez@clinic.com",
-    phone: "+1 (555) 987-6543",
-    status: "active",
-    shift: "morning",
-    experience: "8 years",
-    startDate: "2018-06-01",
-    currentPatients: 12,
-    rating: 4.8,
-    avatar: null,
-  },
-  {
-    id: 3,
-    name: "Dr. Michael Thompson",
-    role: "Emergency Physician",
-    department: "Emergency",
-    email: "michael.thompson@clinic.com",
-    phone: "+1 (555) 456-7890",
-    status: "active",
-    shift: "night",
-    experience: "15 years",
-    startDate: "2016-09-10",
-    currentPatients: 0,
-    rating: 4.7,
-    avatar: null,
-  },
-  {
-    id: 4,
-    name: "Lisa Chen",
-    role: "Medical Assistant",
-    department: "Administration",
-    email: "lisa.chen@clinic.com",
-    phone: "+1 (555) 321-0987",
-    status: "active",
-    shift: "morning",
-    experience: "5 years",
-    startDate: "2021-01-20",
-    currentPatients: 8,
-    rating: 4.6,
-    avatar: null,
-  },
-  {
-    id: 5,
-    name: "Dr. Robert Kim",
-    role: "Radiologist",
-    department: "Radiology",
-    email: "robert.kim@clinic.com",
-    phone: "+1 (555) 654-3210",
-    status: "on-leave",
-    shift: "night",
-    experience: "10 years",
-    startDate: "2019-04-05",
-    currentPatients: 0,
-    rating: 4.8,
-    avatar: null,
-  },
-];
+import { useStaffStore } from "@/features/doctor-dashboard/stores/staffStore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function StaffOverview() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [shiftFilter, setShiftFilter] = useState("all");
-  const [staff] = useState(mockStaff);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { staff, isLoading, error, fetchStaff, toggleStaffStatus } = useStaffStore();
+
+  useEffect(() => {
+    fetchStaff();
+  }, []);
   
   // Scroll to top when this section is accessed
   useScrollToTopOnRouteChange({ smooth: true, delay: 100 });
 
   const filteredStaff = staff.filter((member) => {
-    const matchesSearch =
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.phone.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesShift = shiftFilter === "all" || member.shift === shiftFilter;
-    return matchesSearch && matchesShift;
+    const nameMatch = member.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const statusMatch =
+      statusFilter === "all" || member.status === statusFilter;
+    return nameMatch && statusMatch;
   });
 
   const handleViewStaff = (staffId) => {
     navigate(`/doctor-dashboard/staff/${staffId}`);
   };
 
-  const handleEditStaff = (staffId) => {
-    navigate(`/doctor-dashboard/staff/${staffId}/edit`);
+
+
+  const handleToggleStatus = async (staffId, currentStatus) => {
+    await toggleStaffStatus(staffId, currentStatus);
   };
 
   const handleCreateStaff = () => {
@@ -191,7 +121,7 @@ export default function StaffOverview() {
                       Deactivated
                     </p>
                     <p className="text-lg font-bold text-red-600">
-                      {staff.filter((s) => s.status === "on-leave").length}
+                      {staff.filter((s) => s.status === "inactive").length}
                     </p>
                   </div>
                 </div>
@@ -216,16 +146,40 @@ export default function StaffOverview() {
         transition={{ delay: 0.2 }}
       >
         <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-xl overflow-hidden m-3">
-          <StaffTable
-            staff={filteredStaff}
-            onViewStaff={handleViewStaff}
-            onEditStaff={handleEditStaff}
+          <CompactSearchFilter
             searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            shiftFilter={shiftFilter}
-            setShiftFilter={setShiftFilter}
-            totalStaffCount={staff.length}
+            onSearchChange={setSearchTerm}
+            filterValue={statusFilter}
+            onFilterChange={setStatusFilter}
+            filterOptions={[
+              { value: "all", label: "All Statuses" },
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+            filterLabel="Status"
+            filteredCount={filteredStaff.length}
+            totalCount={staff.length}
           />
+          {isLoading ? (
+            <div className="space-y-2 p-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-red-600">
+              <AlertTriangle className="mx-auto h-12 w-12" />
+              <h3 className="mt-2 text-lg font-medium">An Error Occurred</h3>
+              <p className="mt-1 text-sm text-red-500">{error}</p>
+            </div>
+          ) : (
+            <StaffTable
+              staff={filteredStaff}
+              onViewStaff={handleViewStaff}
+              onToggleStatus={handleToggleStatus}
+            />
+          )}
         </Card>
       </motion.div>
     </div>

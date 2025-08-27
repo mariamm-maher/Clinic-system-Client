@@ -1,22 +1,19 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, User, Mail } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { User, Mail } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 import { useStaffFormStore } from "./staffFormStore";
 
 export default function BasicInfoStep() {
-  const { formData, updateFormData, getFieldError, handleAvatarUpload } =
-    useStaffFormStore();
+  const { formData, updateFormData, getFieldError } = useStaffFormStore();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (field, value) => {
     updateFormData("basicInfo", { [field]: value });
-  };
-
-  const handleAvatarChange = (e) => {
-    handleAvatarUpload(e.target.files[0]);
   };
 
   return (
@@ -36,9 +33,8 @@ export default function BasicInfoStep() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col items-center space-y-4">
-              <Avatar className="h-28 w-28 ring-4 ring-blue-100 shadow-lg">
-                <AvatarImage src={formData.basicInfo.avatarPreview} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 text-xl font-semibold">
+              <Avatar className="h-28 w-28 ring-4 ring-blue-100 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
+                <AvatarFallback className="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 text-3xl font-semibold">
                   {formData.basicInfo.name ? (
                     formData.basicInfo.name
                       .split(" ")
@@ -47,36 +43,10 @@ export default function BasicInfoStep() {
                       .slice(0, 2)
                       .toUpperCase()
                   ) : (
-                    <User className="w-8 h-8" />
+                    <User className="w-10 h-10 text-blue-400" />
                   )}
                 </AvatarFallback>
               </Avatar>
-              <div className="text-center">
-                <Label htmlFor="avatar" className="cursor-pointer">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="hover:bg-blue-50"
-                  >
-                    <span>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Photo
-                    </span>
-                  </Button>
-                </Label>
-                <Input
-                  id="avatar"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="hidden"
-                />
-                <p className="text-xs text-slate-500 mt-2">
-                  JPG, PNG up to 5MB
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -129,18 +99,31 @@ export default function BasicInfoStep() {
               </div>
               <div>
                 <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.basicInfo.password}
-                  onChange={(e) =>
-                    handleInputChange("password", e.target.value)
-                  }
-                  placeholder="Secure password"
-                  className={`mt-1 ${
-                    getFieldError("basicInfo.password") ? "border-red-500" : ""
-                  }`}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.basicInfo.password}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
+                    placeholder="Secure password"
+                    className={`mt-1 pr-10 ${ // Add padding for the icon
+                      getFieldError("basicInfo.password") ? "border-red-500" : ""
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 {getFieldError("basicInfo.password") && (
                   <p className="text-sm text-red-600 mt-1">
                     {getFieldError("basicInfo.password")}

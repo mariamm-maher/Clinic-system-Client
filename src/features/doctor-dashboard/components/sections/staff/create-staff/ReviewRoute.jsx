@@ -8,12 +8,10 @@ export default function ReviewRoute() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    // Call the handleSubmit from the store
     const success = await handleSubmit(e);
-    // Navigate after successful submission
-    // if (success) {
-    //   navigate("/doctor-dashboard/staff");
-    // }
+    if (success) {
+      navigate("/doctor-dashboard/staff");
+    }
   };
 
   const handleCancel = () => {

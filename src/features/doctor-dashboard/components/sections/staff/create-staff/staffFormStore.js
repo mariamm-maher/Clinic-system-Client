@@ -24,8 +24,7 @@ const initialFormData = {
       street: "",
       city: "",
       state: "",
-      zipCode: "",
-      country: "Egypt",
+   
     },
     emergencyContact: {
       name: "",
@@ -83,36 +82,15 @@ const transformFormDataForAPI = (formData) => {
       gender: formData.personalInfo.gender,
       address: {
         street: formData.personalInfo.address.street,
-        city: formData.personalInfo.address.city,
-        state: formData.personalInfo.address.state,
-        zipCode: formData.personalInfo.address.zipCode,
-        country: formData.personalInfo.address.country
+        city: formData.personalInfo.address.city
       },
-      emergencyContact: {
-        name: formData.personalInfo.emergencyContact.name,
-        phone: formData.personalInfo.emergencyContact.phone,
-        relationship: formData.personalInfo.emergencyContact.relationship
-      }
     },
     identification: {
       nationalID: formData.identification.nationalID,
       nationalIDPhoto: {
-        front: formData.identification.nationalIDPhoto.front,
-        back: formData.identification.nationalIDPhoto.back
+        front: "/uploads/id-front.jpg",
+        back: "/uploads/id-back.jpg"
       }
-    },
-    professional: {
-      department: formData.professionalInfo.department,
-      position: formData.professionalInfo.position,
-      experience: {
-        years: parseInt(formData.professionalInfo.experience.years) || 0
-      },
-      qualifications: formData.professionalInfo.qualifications.map(qual => ({
-        degree: qual.degree,
-        institution: qual.institution,
-        year: parseInt(qual.year) || 0,
-        certificatePhoto: qual.certificatePhoto
-      }))
     }
   };
 };
@@ -153,23 +131,15 @@ export const useStaffFormStore = create(
         };
       }),
 
-    // File handling actions
-    handleAvatarUpload: (file) => {
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          get().updateFormData("basicInfo", {
-            avatar: file,
-            avatarPreview: reader.result,
-          });
-        };
-        reader.readAsDataURL(file);
-      }
-    },
+
 
     handleDocumentUpload: (path, file) => {
       if (file) {
-        get().updateNestedFormData(path, file);
+        const isFront = path.includes("front");
+        const staticPath = isFront
+          ? "/uploads/id-front.jpg"
+          : "/uploads/id-back.jpg";
+        get().updateNestedFormData(path, staticPath);
       }
     },
 
@@ -213,6 +183,8 @@ export const useStaffFormStore = create(
             newErrors["personalInfo.age"] = "Age is required";
           if (!state.formData.personalInfo.gender?.trim())
             newErrors["personalInfo.gender"] = "Gender is required";
+          if (!state.formData.identification.nationalID?.trim())
+            newErrors["identification.nationalID"] = "National ID is required";
           // Age validation
           const age = parseInt(state.formData.personalInfo.age);
           if (age && (age < 18 || age > 100))
@@ -326,12 +298,6 @@ export const useStaffFormStore = create(
     handleSubmit: async (e) => {
       if (e) e.preventDefault();
       const state = get();
-
-      // Validate all steps before submission
-      if (!state.validateAllSteps()) {
-        return { success: false, error: "Please fix validation errors before submitting" };
-      }
-
       set({
         isLoading: true,
       });
@@ -340,12 +306,12 @@ export const useStaffFormStore = create(
         // Transform form data to API format
         const apiData = transformFormDataForAPI(state.formData);
         
-        console.log("Creating staff member with data:", apiData);
+        console.log("Creating staff member with data (from the form store):", apiData);
 
         // Call the API
         const result = await createStaff(apiData);
         
-        console.log("Staff member created successfully:", result);
+        console.log("Staff member created successfully (from the form store):", result);
         
         // Show success toast
         toast.success("Staff member created successfully!", {
@@ -362,26 +328,37 @@ export const useStaffFormStore = create(
 
         return { success: true, data: result };
       } catch (error) {
-        console.error("Error creating staff member:", error);
-        
-        // Handle different types of errors
-        let errorMessage = "Failed to create staff member. Please try again.";
-        
-        if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
+        console.error("Error creating staff member (from the store):", error);
+
+        let errorTitle = "Failed to create staff member";
+        let errorDescription = "An unexpected error occurred. Please try again.";
+
+        if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
+          // Handle detailed validation errors from the backend
+          errorTitle = error.response.data.message || "Validation Error";
+          errorDescription = error.response.data.details
+            .map(d => `- ${d.replace(/"/g, "")}`)
+            .join('\n');
+        } else if (error.response?.data?.message) {
+          errorDescription = error.response.data.message;
         } else if (error.message) {
-          errorMessage = error.message;
+          errorDescription = error.message;
         } else if (typeof error === 'string') {
-          errorMessage = error;
+          errorDescription = error;
         }
 
         // Show error toast
-        toast.error("Failed to create staff member", {
-          description: errorMessage,
-          duration: 5000,
+        toast.error(errorTitle, {
+          description: errorDescription,
+          duration: 8000, // Increased duration for readability
+          style: { whiteSpace: 'pre-line' }, // Ensure newlines are rendered
         });
 
-        return { success: false, error: errorMessage };
+        set({
+          isLoading: false,
+        });
+
+        return { success: false, error: error };
       } finally {
         set({ isLoading: false });
       }

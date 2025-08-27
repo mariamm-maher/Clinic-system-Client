@@ -11,7 +11,7 @@ import {
 import { MapPin, Phone, Shield } from "lucide-react";
 import { useStaffFormStore } from "./staffFormStore";
 
-const genders = ["male", "female", "other"];
+const genders = ["male", "female"];
 const relationships = [
   "Parent",
   "Spouse",
@@ -149,30 +149,7 @@ export default function PersonalInfoStep() {
                   className="mt-1"
                 />
               </div>
-              <div>
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
-                  value={address.state}
-                  onChange={(e) =>
-                    handleInputChange("address.state", e.target.value)
-                  }
-                  placeholder="Cairo"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="zipCode">Zip Code</Label>
-                <Input
-                  id="zipCode"
-                  value={address.zipCode}
-                  onChange={(e) =>
-                    handleInputChange("address.zipCode", e.target.value)
-                  }
-                  placeholder="11311"
-                  className="mt-1"
-                />
-              </div>
+           
             </div>
           </div>
 
@@ -242,16 +219,23 @@ export default function PersonalInfoStep() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="nationalID">National ID</Label>
+            <Label htmlFor="nationalID">National ID *</Label>
             <Input
               id="nationalID"
               value={identification.nationalID}
               onChange={(e) =>
-                handleInputChange("identification.nationalID", e.target.value)
+                updateNestedFormData("identification.nationalID", e.target.value)
               }
               placeholder="29801011234567"
-              className="mt-1"
+              className={`mt-1 ${
+                  getFieldError("identification.nationalID") ? "border-red-500" : ""
+                }`}
             />
+             {getFieldError("identification.nationalID") && (
+                <p className="text-sm text-red-600 mt-1">
+                  {getFieldError("identification.nationalID")}
+                </p>
+              )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

@@ -12,18 +12,19 @@ import {
 
 export default function CompactSearchFilter({
   searchTerm,
-  setSearchTerm,
-  shiftFilter,
-  setShiftFilter,
-  filteredCount,
+  onSearchChange,
+  filterValue,
+  onFilterChange,
+  filterOptions = [],
+  filterLabel = "Filter",
   totalCount,
-  shifts = ["morning", "night"],
+  filteredCount,
 }) {
-  const hasActiveFilters = searchTerm || shiftFilter !== "all";
+  const hasActiveFilters = searchTerm || filterValue !== "all";
 
   const clearFilters = () => {
-    setSearchTerm("");
-    setShiftFilter("all");
+    onSearchChange("");
+    onFilterChange("all");
   };
 
   return (
@@ -35,33 +36,26 @@ export default function CompactSearchFilter({
           <div className="relative flex-1 min-w-0 max-w-xs">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
             <Input
+              id="search"
               placeholder="Search staff..."
+              className="pl-10 bg-white/80 border-slate-200 focus:border-blue-400 focus:ring-blue-200"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 h-9 text-sm border-slate-200 bg-white/80 focus:bg-white focus:ring-1 focus:ring-blue-400 focus:border-blue-400 transition-all"
+              onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
 
           {/* Compact Filter */}
-          <Select value={shiftFilter} onValueChange={setShiftFilter}>
-            <SelectTrigger className="w-40 h-9 text-sm border-slate-200 bg-white/80 focus:bg-white focus:ring-1 focus:ring-blue-400 focus:border-blue-400">
-              <div className="flex items-center gap-1">
-                <SelectValue placeholder="Shift" />
+          <Select value={filterValue} onValueChange={onFilterChange}>
+            <SelectTrigger className="w-48 bg-white/80 border-slate-200">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-slate-500" />
+                <SelectValue placeholder={`Filter by ${filterLabel}`} />
               </div>
-            </SelectTrigger>{" "}
-            <SelectContent className="border-slate-200 shadow-lg">
-              <SelectItem value="all" className="text-sm">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-slate-400" />
-                  All Shifts
-                </div>
-              </SelectItem>
-              {shifts.map((shift) => (
-                <SelectItem key={shift} value={shift} className="text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-500" />
-                    {shift.charAt(0).toUpperCase() + shift.slice(1)} Shift
-                  </div>
+            </SelectTrigger>
+            <SelectContent>
+              {filterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -88,14 +82,7 @@ export default function CompactSearchFilter({
             </Badge>
           )}
 
-          {shiftFilter !== "all" && (
-            <Badge
-              variant="outline"
-              className="border-purple-300 bg-purple-50 text-purple-700 text-xs px-2 py-1"
-            >
-              {shiftFilter}
-            </Badge>
-          )}
+       
 
           {/* Clear Filters */}
           {hasActiveFilters && (
